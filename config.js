@@ -3,7 +3,7 @@
  * ========================================================= */
 window.FORM_CONFIG = {
   // ▼ GASを「ウェブアプリ」としてデプロイしたURL（最後が /exec）
-  API_URL: 'https://script.google.com/macros/s/ここにデプロイIDを貼る/exec',
+  API_URL: 'https://script.google.com/macros/s/AKfycbwsGVmomPJebp1wB8VAXyWD1cmGTEJmJnK5cd2TzyyVctXSXRDN8t3_uJrOmegmzBnv/exec',
 
   COMPANY_NAME: '合同会社newpartner',
   REPRESENTATIVE: '代表社員　佐々木 聡',
