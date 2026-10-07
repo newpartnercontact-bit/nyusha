@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>親権者同意書</title>
+<style>
+  :root { --main:#1f4e79; --line:#d0d7de; --bg:#f6f8fa; --err:#c62828; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:"Hiragino Sans","Noto Sans JP","Yu Gothic",sans-serif; background:var(--bg); color:#222; line-height:1.7; }
+  .wrap { max-width:640px; margin:0 auto; padding:16px; }
+  h1 { font-size:20px; color:var(--main); margin:8px 0 16px; }
+  .card { background:#fff; border:1px solid var(--line); border-radius:10px; padding:16px; margin-bottom:16px; }
+  .card h2 { font-size:16px; margin:0 0 12px; color:var(--main); }
+  .doc { max-height:320px; overflow:auto; border:1px solid var(--line); border-radius:6px; padding:12px; font-size:14px; background:#fcfcfc; }
+  .doc ol { padding-left:20px; }
+  label { display:block; font-size:14px; font-weight:600; margin:12px 0 4px; }
+  .req::after { content:"必須"; font-size:11px; color:#fff; background:var(--err); border-radius:3px; padding:0 5px; margin-left:6px; }
+  input:read-only { background:#f1f3f5; }
+  input[type=text], input[type=tel], input[type=email], input[type=date], select {
+    width:100%; padding:10px; font-size:16px; border:1px solid var(--line); border-radius:6px; background:#fff; }
+  .row { display:flex; gap:8px; }
+  .row > * { flex:1; }
+  button { font-size:15px; padding:10px 14px; border:none; border-radius:6px; cursor:pointer; }
+  .btn-main { background:var(--main); color:#fff; width:100%; font-size:17px; padding:14px; }
+  .btn-sub { background:#e7edf3; color:var(--main); white-space:nowrap; flex:0 0 auto; }
+  button:disabled { opacity:.5; cursor:not-allowed; }
+  .check { display:flex; gap:8px; align-items:flex-start; font-weight:normal; margin:10px 0; }
+  .check input { width:20px; height:20px; margin-top:3px; flex:0 0 auto; }
+  .hint { font-size:12px; color:#666; margin-top:4px; }
+  .msg { font-size:14px; margin-top:6px; }
+  .msg.ok { color:#2e7d32; } .msg.err { color:var(--err); }
+  #sigPad { width:100%; height:180px; border:2px dashed var(--line); border-radius:6px; touch-action:none; background:#fff; display:block; }
+  .done { text-align:center; padding:32px 16px; }
+  .done .no { font-size:20px; font-weight:700; color:var(--main); margin:12px 0; }
+  .overlay { position:fixed; inset:0; background:rgba(255,255,255,.85); display:none; align-items:center; justify-content:center; flex-direction:column; z-index:999; font-size:15px; color:#1f4e79; text-align:center; padding:24px; }
+  .overlay.show { display:flex; }
+  .spinner { width:42px; height:42px; border:4px solid #d0d7de; border-top-color:#1f4e79; border-radius:50%; animation:spin 1s linear infinite; margin-bottom:14px; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .bd select { padding:10px 6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="formArea">
+    <h1>親権者同意書</h1>
+
+    <div class="card">
+      <h2>同意書の内容</h2>
+      <div class="doc">
+        <p><span data-c="COMPANY_NAME"></span> 御中</p>
+        <p>私は、下記の未成年者（以下「本人」といいます。）の親権者として、本人が貴社との間で次の契約を締結し、貴社で就労することに同意します。</p>
+        <ol>
+          <li>雇用契約（アルバイト）の締結</li>
+          <li>秘密保持確約書の締結</li>
+        </ol>
+        <p>また、私は次の事項を確認しました。</p>
+        <ol>
+          <li>本人の労働条件（業務内容、就業場所、就業時間、賃金等）について、貴社からの説明または本人を通じて確認したこと。</li>
+          <li>秘密保持確約書の内容（業務上知り得た貴社およびお客様の秘密情報・個人情報を、在職中および退職後も第三者に開示・漏洩しないこと等）を確認したこと。</li>
+          <li>本同意は電子的な方法で行い、本フォームによる入力・署名の記録が、書面への署名と同等に取り扱われること。</li>
+        </ol>
+        <p class="hint">文書：<span data-c="CONSENT_VERSION"></span></p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>本人（お子さま）の情報</h2>
+      <label class="req">氏名</label>
+      <input type="text" id="studentName" placeholder="例：山田太郎" autocomplete="off" >
+      <div class="hint">会社に登録している氏名と同じ表記で入力してください。</div>
+      <label class="req">生年月日</label>
+      <div class="row bd" id="birthSel" data-prefill=""><select id="bY" style="flex:1"><option value="">年</option></select><select id="bM" style="flex:1"><option value="">月</option></select><select id="bD" style="flex:1"><option value="">日</option></select></div>
+    </div>
+
+    <div class="card">
+      <h2>親権者の情報</h2>
+      <label class="req">親権者氏名</label>
+      <input type="text" id="guardianName" placeholder="例：山田 花子">
+      <label class="req">続柄</label>
+      <select id="relation">
+        <option value="">選択してください</option>
+        <option>父</option><option>母</option><option>その他の親権者</option><option>未成年後見人</option>
+      </select>
+      <label class="req">電話番号</label>
+      <input type="tel" id="tel" placeholder="例：090-1234-5678">
+      <label class="req">メールアドレス（親権者ご本人のもの）</label>
+      <div class="row">
+        <input type="email" id="email" placeholder="example@mail.com">
+        <button type="button" class="btn-sub" id="sendCodeBtn">認証コード送信</button>
+      </div>
+      <div class="msg" id="codeMsg"></div>
+      <label class="req">認証コード（6桁）</label>
+      <input type="text" id="code" inputmode="numeric" maxlength="6" placeholder="メールに届いた6桁の数字">
+    </div>
+
+    <div class="card">
+      <h2>同意事項</h2>
+      <label class="check"><input type="checkbox" id="agreeEmployment">本人が雇用契約（アルバイト）を締結することに同意します。</label>
+      <label class="check"><input type="checkbox" id="agreeNda">本人が秘密保持確約書を締結することに同意し、その内容を確認しました。</label>
+      <label class="check"><input type="checkbox" id="agreeElectronic">電子的方法による同意・署名が、書面への署名と同等に扱われることに同意します。</label>
+    </div>
+
+    <div class="card">
+      <h2>親権者の署名</h2>
+      <div class="hint" style="margin-bottom:6px">枠内に指またはマウスでフルネームを書いてください。</div>
+      <canvas id="sigPad"></canvas>
+      <div style="text-align:right;margin-top:6px"><button type="button" class="btn-sub" id="clearSig">書き直す</button></div>
+    </div>
+
+    <div class="msg err" id="submitMsg"></div>
+    <button type="button" class="btn-main" id="submitBtn">同意して提出する</button>
+    <p class="hint" style="text-align:center">提出後、入力したメールアドレスに控えが届きます。</p>
+  </div>
+
+  <div id="doneArea" class="card done" style="display:none">
+    <h1>提出が完了しました</h1>
+    <div>受付番号</div>
+    <div class="no" id="receiptNo"></div>
+    <p id="doneNote">ご入力いただいたメールアドレスに控えをお送りしました。</p>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script>
+  /* ===== GAS（裏側）との通信：google.script.run と同じ書き方で使える ===== */
+  (function () {
+    const C = window.FORM_CONFIG || {};
+    const params = new URLSearchParams(location.search);
+    window.QS = params;
+    function api(fn, args) {
+      return fetch(C.API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ fn: fn, args: args, k: params.get('k') || '' }),
+      }).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
+    }
+    window.google = { script: {} };
+    Object.defineProperty(window.google.script, 'run', { get: function () {
+      const st = {};
+      const p = new Proxy({}, { get: function (_, k) {
+        if (k === 'withSuccessHandler') return f => { st.s = f; return p; };
+        if (k === 'withFailureHandler') return f => { st.f = f; return p; };
+        return (...args) => api(k, args)
+          .then(r => { if (r && r.__error) throw new Error(r.__error); st.s && st.s(r); })
+          .catch(e => { console.error(e); st.f && st.f(e); });
+      } });
+      return p;
+    } });
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('[data-c]').forEach(el => { el.textContent = C[el.getAttribute('data-c')] || ''; });
+    });
+  })();
+</script>
+<script>
+  const $ = id => document.getElementById(id);
+
+  /* ---------- 署名パッド（表示後にサイズを確定・タッチ対応） ---------- */
+  const canvas = $('sigPad'), ctx = canvas.getContext('2d');
+  let drawing = false, hasInk = false, last = null;
+  function setupPad(force) {
+    const rect = canvas.getBoundingClientRect();
+    if (!rect.width || !rect.height) return false;
+    const r = window.devicePixelRatio || 1, W = Math.round(rect.width * r), H = Math.round(rect.height * r);
+    if (!force && canvas.width === W && canvas.height === H) return true;
+    canvas.width = W; canvas.height = H; ctx.setTransform(r, 0, 0, r, 0, 0);
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, rect.width, rect.height);
+    ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#111';
+    hasInk = false; return true;
+  }
+  window.addEventListener('load', () => setupPad(true));
+  if (window.ResizeObserver) new ResizeObserver(() => { if (!hasInk) setupPad(true); }).observe(canvas);
+  const pos = e => { const b = canvas.getBoundingClientRect(), t = e.touches ? e.touches[0] : e; return { x: t.clientX - b.left, y: t.clientY - b.top }; };
+  function padStart(e) {
+    e.preventDefault(); setupPad(false); drawing = true; last = pos(e);
+    ctx.beginPath(); ctx.arc(last.x, last.y, 1.2, 0, Math.PI * 2); ctx.fillStyle = '#111'; ctx.fill();
+  }
+  function padMove(e) {
+    if (!drawing) return; e.preventDefault();
+    const p = pos(e); ctx.beginPath(); ctx.moveTo(last.x, last.y); ctx.lineTo(p.x, p.y); ctx.stroke(); last = p; hasInk = true;
+  }
+  const padEnd = () => { drawing = false; };
+  if (window.PointerEvent) {
+    canvas.addEventListener('pointerdown', e => { try { canvas.setPointerCapture(e.pointerId); } catch (_) {} padStart(e); });
+    canvas.addEventListener('pointermove', padMove);
+    ['pointerup', 'pointercancel'].forEach(t => canvas.addEventListener(t, padEnd));
+  } else {
+    canvas.addEventListener('touchstart', padStart, { passive: false });
+    canvas.addEventListener('touchmove', padMove, { passive: false });
+    canvas.addEventListener('touchend', padEnd);
+  }
+  $('clearSig').onclick = () => setupPad(true);
+  /* ---------- 生年月日（年・月・日のプルダウン） ---------- */
+  function wareki(y) { return y >= 2019 ? '令和' + (y - 2018) : y >= 1989 ? '平成' + (y - 1988) : '昭和' + (y - 1925); }
+  function initBirth(minAge, maxAge, onChange) {
+    const y = $('bY'), m = $('bM'), d = $('bD'), now = new Date().getFullYear();
+    for (let i = now - minAge; i >= now - maxAge; i--) y.add(new Option(i + '年（' + wareki(i) + '）', i));
+    for (let i = 1; i <= 12; i++) m.add(new Option(i + '月', i));
+    const fillDays = () => {
+      const cur = Number(d.value), n = y.value && m.value ? new Date(y.value, m.value, 0).getDate() : 31;
+      d.length = 1; for (let i = 1; i <= n; i++) d.add(new Option(i + '日', i));
+      if (cur && cur <= n) d.value = cur;
+    };
+    fillDays();
+    const pre = $('birthSel').getAttribute('data-prefill');
+    if (/^\d{4}-\d{2}-\d{2}$/.test(pre || '')) {
+      const p = pre.split('-').map(Number);
+      if (![...y.options].some(o => Number(o.value) === p[0])) y.add(new Option(p[0] + '年（' + wareki(p[0]) + '）', p[0]));
+      y.value = p[0]; m.value = p[1]; fillDays(); d.value = p[2];
+      y.disabled = m.disabled = d.disabled = true;
+    }
+    ['change', 'input'].forEach(ev => {
+      y.addEventListener(ev, () => { fillDays(); onChange && onChange(); });
+      m.addEventListener(ev, () => { fillDays(); onChange && onChange(); });
+      d.addEventListener(ev, () => onChange && onChange());
+    });
+  }
+  function getBirth() {
+    const y = $('bY').value, m = $('bM').value, d = $('bD').value;
+    return y && m && d ? y + '-' + String(m).padStart(2, '0') + '-' + String(d).padStart(2, '0') : '';
+  }
+  function cooldown(btn, sec) {
+    const label = btn.getAttribute('data-label') || btn.textContent; btn.setAttribute('data-label', label);
+    btn.disabled = true;
+    const t = setInterval(() => { sec--; btn.textContent = '再送信（' + sec + '）'; if (sec <= 0) { clearInterval(t); btn.disabled = false; btn.textContent = '再送信'; } }, 1000);
+    btn.textContent = '再送信（' + sec + '）';
+  }
+  (function () {
+    const n = QS.get('name') || '', b = QS.get('birth') || '';
+    if (n) { $('studentName').value = n; $('studentName').readOnly = true; }
+    if (/^\d{4}-\d{2}-\d{2}$/.test(b)) $('birthSel').setAttribute('data-prefill', b);
+  })();
+  initBirth(13, 25);
+
+  /* ---- 認証コード送信 ---- */
+  $('sendCodeBtn').onclick = () => {
+    const btn = $('sendCodeBtn'), msg = $('codeMsg');
+    btn.disabled = true; msg.className = 'msg'; msg.textContent = '送信中…';
+    google.script.run
+      .withSuccessHandler(r => {
+        if (r.ok) { msg.className = 'msg ok'; msg.textContent = '認証コードを送信しました。メールをご確認ください（10分間有効）。'; }
+        else { msg.className = 'msg err'; msg.textContent = r.message; }
+        if (r.ok) cooldown(btn, 30); else btn.disabled = false;
+      })
+      .withFailureHandler(() => { msg.className = 'msg err'; msg.textContent = '送信に失敗しました。'; btn.disabled = false; })
+      .sendVerificationCode($('email').value, 'consent');
+  };
+
+  /* ---- 提出 ---- */
+  $('submitBtn').onclick = () => {
+    const msg = $('submitMsg');
+    const d = {
+      studentName: $('studentName').value.trim(),
+      birthDate: getBirth(),
+      guardianName: $('guardianName').value.trim(),
+      relation: $('relation').value,
+      tel: $('tel').value.trim(),
+      email: $('email').value.trim(),
+      code: $('code').value.trim(),
+      agreeEmployment: $('agreeEmployment').checked,
+      agreeNda: $('agreeNda').checked,
+      agreeElectronic: $('agreeElectronic').checked,
+      signature: hasInk ? canvas.toDataURL('image/png') : '',
+      userAgent: navigator.userAgent,
+    };
+    if (!d.studentName || !d.birthDate || !d.guardianName || !d.relation || !d.tel || !d.email || !d.code) { msg.textContent = '未入力の項目があります。'; return; }
+    if (!d.agreeEmployment || !d.agreeNda || !d.agreeElectronic) { msg.textContent = 'すべての同意事項にチェックしてください。'; return; }
+    if (!d.signature) { msg.textContent = '署名欄に署名してください。'; return; }
+
+    const btn = $('submitBtn'); btn.disabled = true; btn.textContent = '送信中…'; msg.textContent = ''; $('overlay').classList.add('show');
+    google.script.run
+      .withSuccessHandler(r => {
+        $('overlay').classList.remove('show');
+        if (!r.ok) { msg.textContent = r.message; btn.disabled = false; btn.textContent = '同意して提出する'; return; }
+        $('formArea').style.display = 'none';
+        $('doneArea').style.display = 'block';
+        $('receiptNo').textContent = r.receiptNo;
+        if (!r.matched) $('doneNote').textContent += ' 登録内容の確認のため、担当者からご連絡する場合があります。';
+        window.scrollTo(0, 0);
+      })
+      .withFailureHandler(() => { $('overlay').classList.remove('show'); msg.textContent = '通信エラーが発生しました。もう一度お試しください。'; btn.disabled = false; btn.textContent = '同意して提出する'; })
+      .submitConsent(d);
+  };
+
+  /* ---------- iPhone対策：選択後にフォーカスを外して固まりを防ぐ ---------- */
+  document.addEventListener('change', e => {
+    if (e.target && e.target.tagName === 'SELECT') setTimeout(() => e.target.blur(), 0);
+  });
+</script>
+<div class="overlay" id="overlay"><div class="spinner"></div>送信しています。<br>画面を閉じずに、10秒ほどお待ちください。</div>
+</body>
+</html>
