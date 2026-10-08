@@ -108,6 +108,14 @@
     <input type="text" id="kana" placeholder="例：ヤマダタロウ">
     <div class="hint">ひらがなで入力しても、カタカナに変換されます。</div>
 
+    <label class="f req">性別</label>
+    <div class="radios">
+      <label><input type="radio" name="gender" value="男性">男性</label>
+      <label><input type="radio" name="gender" value="女性">女性</label>
+      <label><input type="radio" name="gender" value="未回答">回答しない</label>
+    </div>
+    <div class="hint">社会保険・雇用保険の手続きのため、届出上の性別をお願いします。</div>
+
     <label class="f req">生年月日</label>
     <div class="row bd" id="birthSel" data-prefill=""><select id="bY" class="grow"><option value="">年</option></select><select id="bM" class="grow"><option value="">月</option></select><select id="bD" class="grow"><option value="">日</option></select></div>
     <div class="msg" id="ageMsg"></div>
@@ -414,7 +422,7 @@
   $('submitBtn').onclick = () => {
     const msg = $('submitMsg');
     const d = {
-      name: $('name').value, kana: toKana($('kana').value), birth: getBirth(), empType: radio('empType'),
+      name: $('name').value, kana: toKana($('kana').value), birth: getBirth(), empType: radio('empType'), gender: radio('gender'),
       postal: $('postal').value, address: $('address').value, tel: $('tel').value, email: $('email').value, code: $('code').value,
       myNumber: $('myNumber').value.normalize('NFKC').replace(/\D/g, ''),
       guardianEmail: $('guardianEmail').value,
@@ -431,6 +439,7 @@
     let e = '';
     if (!d.agreeNda || !d.agreeElectronic) e = '1. 秘密保持確約書の2つのチェックを入れてください。';
     else if (!d.name.trim() || !d.kana.trim() || !d.birth || !d.address.trim() || !d.tel.trim() || !d.email.trim()) e = '2. 基本情報に未入力の項目があります。';
+    else if (!d.gender) e = '2. 性別を選択してください。';
     else if (!d.code.trim()) e = 'メールに届いた認証コードを入力してください。';
     else if (!validMyNumber(d.myNumber)) e = 'マイナンバーをご確認ください。';
     else if (a != null && a < 18 && !d.guardianEmail.trim()) { onBirth(); $('minorBox').scrollIntoView({ behavior: 'smooth', block: 'center' }); e = '18歳未満の方は、保護者のメールアドレスを入力してください。'; }
