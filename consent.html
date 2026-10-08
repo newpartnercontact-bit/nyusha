@@ -142,9 +142,10 @@
       const p = new Proxy({}, { get: function (_, k) {
         if (k === 'withSuccessHandler') return f => { st.s = f; return p; };
         if (k === 'withFailureHandler') return f => { st.f = f; return p; };
-        return (...args) => api(k, args)
-          .then(r => { if (r && r.__error) throw new Error(r.__error); st.s && st.s(r); })
-          .catch(e => { console.error(e); st.f && st.f(e); });
+        // 通信の失敗だけを failure に回す（画面側の処理エラーを「通信エラー」と表示しない）
+        return (...args) => api(k, args).then(
+          r => { try { st.s && st.s(r); } catch (e) { console.error('画面の処理でエラー', e); } },
+          e => { console.error(e); st.f && st.f(e); });
       } });
       return p;
     } });
@@ -247,6 +248,16 @@
       .sendVerificationCode($('email').value, 'consent');
   };
 
+
+  /* ---------- 送信の受付ID：応答が届かなくても結果を確認できるように ---------- */
+  const REQ_ID = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+  function recover(id, onOk, onNg, tries) {
+    tries = tries || 0;
+    const again = r => { if (tries < 6) setTimeout(() => recover(id, onOk, onNg, tries + 1), 3000); else onNg(r); };
+    google.script.run.withSuccessHandler(r => { if (r && r.ok) onOk(r); else again(r); })
+      .withFailureHandler(() => again(null)).getResult(id);
+  }
+
   /* ---- 提出 ---- */
   $('submitBtn').onclick = () => {
     const msg = $('submitMsg');
@@ -269,17 +280,24 @@
     if (!d.signature) { msg.textContent = '署名欄に署名してください。'; return; }
 
     const btn = $('submitBtn'); btn.disabled = true; btn.textContent = '送信中…'; msg.textContent = ''; $('overlay').classList.add('show');
+    d.requestId = REQ_ID;
+    const showDone = r => {
+      $('overlay').classList.remove('show');
+      $('formArea').style.display = 'none';
+      $('doneArea').style.display = 'block';
+      $('receiptNo').textContent = r.receiptNo || '';
+      if (r.matched === false) $('doneNote').textContent += ' 登録内容の確認のため、担当者からご連絡する場合があります。';
+      window.scrollTo(0, 0);
+    };
+    const showFail = t => { $('overlay').classList.remove('show'); msg.textContent = t; btn.disabled = false; btn.textContent = '同意して提出する'; };
+    const checkLater = () => recover(REQ_ID, showDone, () => showFail('送信結果を確認できませんでした。控えのメールが届いていれば提出は完了しています。届いていない場合は、もう一度「同意して提出する」を押してください（二重に登録されることはありません）。'));
     google.script.run
       .withSuccessHandler(r => {
-        $('overlay').classList.remove('show');
-        if (!r.ok) { msg.textContent = r.message; btn.disabled = false; btn.textContent = '同意して提出する'; return; }
-        $('formArea').style.display = 'none';
-        $('doneArea').style.display = 'block';
-        $('receiptNo').textContent = r.receiptNo;
-        if (!r.matched) $('doneNote').textContent += ' 登録内容の確認のため、担当者からご連絡する場合があります。';
-        window.scrollTo(0, 0);
+        if (r && r.ok) return showDone(r);
+        if (r && r.pending) return checkLater();
+        showFail((r && r.message) || 'エラーが発生しました。');
       })
-      .withFailureHandler(() => { $('overlay').classList.remove('show'); msg.textContent = '通信エラーが発生しました。もう一度お試しください。'; btn.disabled = false; btn.textContent = '同意して提出する'; })
+      .withFailureHandler(checkLater)
       .submitConsent(d);
   };
 
