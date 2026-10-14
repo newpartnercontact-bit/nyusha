@@ -59,7 +59,7 @@
   <h1>入社手続き</h1>
   <p class="lead"><span data-c="COMPANY_NAME"></span>で働くにあたり、次の内容を入力してください。所要時間は10分ほどです。<br>
     以前に提出した方は、同じ氏名で入力すると最新の内容に更新されます。</p>
-  <div class="steps"><span>1 秘密保持確約書</span><span>2 基本情報</span><span>3 緊急連絡先</span><span>4 振込口座</span><span>5 交通費</span><span>6 署名</span></div>
+  <div class="steps"><span>1 秘密保持確約書</span><span>2 基本情報</span><span>3 緊急連絡先</span><span>4 振込口座</span><span>5 交通費</span><span>6 雇用契約書</span><span>7 署名</span></div>
 
   <!-- 1 秘密保持確約書 -->
   <div class="card">
@@ -219,10 +219,23 @@
     </div>
   </div>
 
-  <!-- 6 署名 -->
+  <!-- 6 雇用契約書 -->
   <div class="card">
-    <h2>6. 署名</h2>
-    <div class="hint" style="margin-bottom:6px">枠内に指またはマウスでフルネームを書いてください。</div>
+    <h2>6. 雇用契約書</h2>
+    <div class="hint" style="margin-bottom:8px">入力した氏名・フリガナ・生年月日・住所を差し込んだ雇用契約書です。雇入年月日は本日、契約期間は本日から1か月間です。内容をご確認ください。</div>
+    <div id="ctPrev"></div>
+    <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+      <button type="button" class="btn-sub" id="ctOpen">契約書を大きく表示（PDF・画像で保存）</button>
+    </div>
+    <label class="f opt" style="margin-top:14px">電子での締結</label>
+    <label class="check"><input type="checkbox" id="contractElectronic">雇用契約書を電子的方法で締結することに同意します。労働者欄は、押印に代えて下の署名で締結することを了承します。</label>
+    <div class="hint">チェックしない場合は、後日、書面（紙）で締結します。</div>
+  </div>
+
+  <!-- 7 署名 -->
+  <div class="card">
+    <h2>7. 署名</h2>
+    <div class="hint" style="margin-bottom:6px">枠内に指またはマウスでフルネームを書いてください。秘密保持確約書と、電子での締結に同意した場合は雇用契約書の署名になります。</div>
     <canvas id="sigPad"></canvas>
     <div style="text-align:right;margin-top:6px"><button type="button" class="btn-sub" id="clearSig">書き直す</button></div>
   </div>
@@ -237,10 +250,21 @@
   <div>受付番号</div>
   <div class="no" id="receiptNo"></div>
   <p id="doneNote"></p>
+  <div id="doneContract" class="hidden" style="text-align:left;margin-top:16px">
+    <div style="font-weight:700;color:#1f4e79;margin-bottom:6px">締結した雇用契約書</div>
+    <div id="donePrev"></div>
+    <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;justify-content:center">
+      <button type="button" class="btn-sub" id="doneImg">画像で保存</button>
+      <button type="button" class="btn-sub" id="donePdf">PDFで保存</button>
+    </div>
+    <div class="msg" id="doneMsg" style="text-align:center"></div>
+  </div>
 </div>
 </div>
 
 <script src="config.js"></script>
+<script src="docs.js"></script>
+<script src="contract_ui.js"></script>
 <script>
   /* ===== GAS（裏側）との通信：google.script.run と同じ書き方で使える ===== */
   (function () {
@@ -300,7 +324,7 @@
     if (!drawing) return; e.preventDefault();
     const p = pos(e); ctx.beginPath(); ctx.moveTo(last.x, last.y); ctx.lineTo(p.x, p.y); ctx.stroke(); last = p; hasInk = true;
   }
-  const padEnd = () => { drawing = false; };
+  const padEnd = () => { if (drawing) { drawing = false; window.onSigChange && window.onSigChange(); } };
   if (window.PointerEvent) {
     canvas.addEventListener('pointerdown', e => { try { canvas.setPointerCapture(e.pointerId); } catch (_) {} padStart(e); });
     canvas.addEventListener('pointermove', padMove);
@@ -310,7 +334,7 @@
     canvas.addEventListener('touchmove', padMove, { passive: false });
     canvas.addEventListener('touchend', padEnd);
   }
-  $('clearSig').onclick = () => setupPad(true);
+  $('clearSig').onclick = () => { setupPad(true); window.onSigChange && window.onSigChange(); };
   /* ---------- 生年月日（年・月・日のプルダウン） ---------- */
   function wareki(y) { return y >= 2019 ? '令和' + (y - 2018) : y >= 1989 ? '平成' + (y - 1988) : '昭和' + (y - 1925); }
   function initBirth(minAge, maxAge, onChange) {
@@ -428,9 +452,33 @@
       .withFailureHandler(() => again(null)).getResult(id);
   }
 
+  /* ---------- 雇用契約書（入力内容を差し込んでプレビュー） ---------- */
+  let TERMS = { date: NPDocs.todayJst(), end: NPDocs.addMonth(NPDocs.todayJst()), wage: NPDocs.CONTRACT.wage };
+  google.script.run.withSuccessHandler(r => { if (r && r.ok) { TERMS = r; refreshContract(); } }).withFailureHandler(() => {}).getContractTerms();
+  function contractData(withSig) {
+    const rd = n => (document.querySelector('input[name="' + n + '"]:checked') || {}).value || '';
+    const el = $('contractElectronic').checked;
+    return {
+      name: $('name').value.trim(), kana: toKana($('kana').value).trim(), birth: getBirth(),
+      postal: $('postal').value.normalize('NFKC').replace(/\D/g, '').replace(/^(\d{3})(\d{4})$/, '$1-$2'), address: $('address').value.trim(),
+      empType: rd('empType'), date: TERMS.date, end: TERMS.end, wage: TERMS.wage,
+      electronic: el, signature: el && withSig !== false && hasInk ? canvas.toDataURL('image/png') : '',
+    };
+  }
+  let ctTimer = null;
+  function refreshContract() {
+    clearTimeout(ctTimer);
+    ctTimer = setTimeout(() => NPContractUI.preview($('ctPrev'), contractData(), () => NPContractUI.open(contractData(), '雇用契約書（確認）')), 150);
+  }
+  window.onSigChange = refreshContract;
+  ['name', 'kana', 'postal', 'address', 'bY', 'bM', 'bD', 'contractElectronic'].forEach(id => { $(id).addEventListener('input', refreshContract); $(id).addEventListener('change', refreshContract); });
+  document.querySelectorAll('input[name="empType"]').forEach(e => e.addEventListener('change', refreshContract));
+  $('ctOpen').onclick = () => NPContractUI.open(contractData(), '雇用契約書（確認）');
+  refreshContract();
+
   /* ---------- 提出 ---------- */
   const radio = n => (document.querySelector('input[name="' + n + '"]:checked') || {}).value || '';
-  $('submitBtn').onclick = () => {
+  $('submitBtn').onclick = async () => {
     const msg = $('submitMsg');
     const d = {
       name: $('name').value, kana: toKana($('kana').value), birth: getBirth(), empType: radio('empType'), gender: radio('gender'),
@@ -444,6 +492,7 @@
       agreeNda: $('agreeNda').checked, agreeElectronic: $('agreeElectronic').checked,
       signature: hasInk ? canvas.toDataURL('image/png') : '',
       userAgent: navigator.userAgent,
+      contractElectronic: $('contractElectronic').checked, contractDate: TERMS.date,
     };
     // 画面側の簡易チェック（最終チェックはサーバー側）
     const a = age(d.birth);
@@ -462,6 +511,10 @@
 
     const btn = $('submitBtn'); btn.disabled = true; btn.textContent = '送信中…'; msg.textContent = ''; $('overlay').classList.add('show');
     d.requestId = REQ_ID;
+    // 電子締結：署名入りの契約書を画像にして一緒に送る（作れなくても提出は続ける）
+    const ctData = contractData();
+    ctData.signedAt = (() => { const t = new Date(Date.now() + 9 * 3600e3); return t.toISOString().slice(0, 16).replace('T', ' ').replace(/-/g, '/'); })();
+    if (d.contractElectronic) { try { d.contractImage = await NPContractUI.toJpeg(ctData); } catch (err) { console.warn(err); } }
     const showDone = r => {
       $('overlay').classList.remove('show');
       $('formArea').classList.add('hidden'); $('doneArea').classList.remove('hidden');
@@ -469,7 +522,15 @@
       let note = 'ご入力いただいたメールアドレスに控えをお送りしました。';
       if (r.action === '保留') note = '登録内容の確認のため、担当者からご連絡します。';
       if (r.consentMailed && r.guardianEmail) note += '<br><br><b>保護者の方（' + String(r.guardianEmail).replace(/[<>&]/g, '') + '）に、親権者同意書の入力をお願いするメールを送りました。</b>保護者の方にお伝えください。';
+      if (r.action !== '保留') note += d.contractElectronic ? '<br><br>雇用契約書を電子で締結しました。下から画像・PDFで保存できます。' : '<br><br>雇用契約書は、後日、書面（紙）で締結します。';
       $('doneNote').innerHTML = note;
+      if (d.contractElectronic && r.action !== '保留') {
+        ctData.receiptNo = r.receiptNo || '';
+        $('doneContract').classList.remove('hidden');
+        NPContractUI.preview($('donePrev'), ctData, () => NPContractUI.open(ctData, '雇用契約書（締結済み）'));
+        $('donePdf').onclick = async () => { $('doneMsg').textContent = 'PDFを作成しています…'; try { await NPContractUI.savePdf(ctData); $('doneMsg').textContent = 'PDFを保存しました。'; } catch (e) { $('doneMsg').textContent = e.message; } };
+        $('doneImg').onclick = () => NPContractUI.open(ctData, '雇用契約書（締結済み）');
+      }
       window.scrollTo(0, 0);
     };
     const showFail = msgText => {
