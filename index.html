@@ -51,6 +51,13 @@
   .spinner { width:42px; height:42px; border:4px solid #d0d7de; border-top-color:#1f4e79; border-radius:50%; animation:spin 1s linear infinite; margin-bottom:14px; }
   @keyframes spin { to { transform:rotate(360deg); } }
   .bd select { padding:10px 6px; }
+  .ph { margin-top:6px; }
+  .ph input[type=file] { position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; }
+  .ph-btn { display:inline-block; background:#e7edf3; color:var(--main); border-radius:6px; padding:10px 14px; font-size:15px; cursor:pointer; font-weight:600; }
+  .ph-prev { margin-top:8px; }
+  .ph-prev img { max-width:100%; max-height:220px; border-radius:6px; border:1px solid var(--line); display:block; }
+  .ph-prev .ph-meta { font-size:12px; color:var(--ok); margin-top:4px; }
+  .ph-prev .ph-meta.err { color:var(--err); }
 </style>
 </head>
 <body>
@@ -59,7 +66,7 @@
   <h1>入社手続き</h1>
   <p class="lead"><span data-c="COMPANY_NAME"></span>で働くにあたり、次の内容を入力してください。所要時間は10分ほどです。<br>
     以前に提出した方は、同じ氏名で入力すると最新の内容に更新されます。</p>
-  <div class="steps"><span>1 秘密保持確約書</span><span>2 基本情報</span><span>3 緊急連絡先</span><span>4 振込口座</span><span>5 交通費</span><span>6 雇用契約書</span><span>7 署名</span></div>
+  <div class="steps"><span>1 秘密保持確約書</span><span>2 基本情報</span><span>3 本人確認書類</span><span>4 緊急連絡先</span><span>5 振込口座</span><span>6 交通費</span><span>7 雇用契約書</span><span>8 署名</span></div>
 
   <!-- 1 秘密保持確約書 -->
   <div class="card">
@@ -161,9 +168,31 @@
     <div class="hint">源泉徴収票の作成や社会保険・雇用保険の手続きにのみ使用します。本人確認のため、初回出勤時にマイナンバーカード（または通知カード＋顔写真付き身分証）をご持参ください。</div>
   </div>
 
-  <!-- 3 緊急連絡先 -->
+  <!-- 3 本人確認書類 -->
   <div class="card">
-    <h2>3. 緊急連絡先 <small>（ご家族など、本人以外の方）</small></h2>
+    <h2>3. 本人確認書類 <small>（スマホのカメラで撮影できます）</small></h2>
+    <label class="f req">顔写真</label>
+    <div class="hint">正面を向いて、顔がはっきり写るように撮影してください（帽子・マスク・サングラスは外してください）。</div>
+    <div class="ph" id="ph-face"><input type="file" accept="image/*" id="idFaceFile"><label for="idFaceFile" class="ph-btn">📷 顔写真を撮る・選ぶ</label><div class="ph-prev"></div></div>
+
+    <label class="f req">身分証の種類</label>
+    <div class="radios">
+      <label><input type="radio" name="idType" value="運転免許証">運転免許証</label>
+      <label><input type="radio" name="idType" value="マイナンバーカード">マイナンバーカード</label>
+      <label><input type="radio" name="idType" value="健康保険証・資格確認書">健康保険証・資格確認書</label>
+    </div>
+    <div class="notice hidden" id="idNote"></div>
+
+    <label class="f req">身分証（表面）</label>
+    <div class="ph" id="ph-front"><input type="file" accept="image/*" id="idFrontFile"><label for="idFrontFile" class="ph-btn">📷 表面を撮る・選ぶ</label><div class="ph-prev"></div></div>
+    <label class="f opt">身分証（裏面）</label>
+    <div class="ph" id="ph-back"><input type="file" accept="image/*" id="idBackFile"><label for="idBackFile" class="ph-btn">📷 裏面を撮る・選ぶ</label><div class="ph-prev"></div></div>
+    <div class="hint">明るい場所で、4つの角が入るように、文字が読めるように撮影してください。光の反射にご注意ください。</div>
+  </div>
+
+  <!-- 4 緊急連絡先 -->
+  <div class="card">
+    <h2>4. 緊急連絡先 <small>（ご家族など、本人以外の方）</small></h2>
     <label class="f req">氏名</label>
     <input type="text" id="emgName" placeholder="例：山田花子">
     <label class="f req">続柄</label>
@@ -180,7 +209,7 @@
 
   <!-- 4 振込口座 -->
   <div class="card">
-    <h2>4. 給与振込口座 <small>（本人名義の口座）</small></h2>
+    <h2>5. 給与振込口座 <small>（本人名義の口座）</small></h2>
     <label class="f req">金融機関名</label>
     <input type="text" id="bankName" list="banks" placeholder="例：北洋銀行">
     <datalist id="banks">
@@ -205,7 +234,7 @@
 
   <!-- 5 交通費 -->
   <div class="card">
-    <h2>5. 交通費</h2>
+    <h2>6. 交通費</h2>
     <label class="check"><input type="checkbox" id="noCommute">徒歩・自転車などで、交通費は不要</label>
     <div id="commuteBox">
       <label class="f req">出発地（自宅の最寄り駅・バス停など）</label>
@@ -221,7 +250,7 @@
 
   <!-- 6 雇用契約書 -->
   <div class="card">
-    <h2>6. 雇用契約書</h2>
+    <h2>7. 雇用契約書</h2>
     <div class="hint" style="margin-bottom:8px">入力した氏名・フリガナ・生年月日・住所を差し込んだ雇用契約書です。雇入年月日は本日、契約期間は本日から1か月間です。内容をご確認ください。</div>
     <div id="ctPrev"></div>
     <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
@@ -234,7 +263,7 @@
 
   <!-- 7 署名 -->
   <div class="card">
-    <h2>7. 署名</h2>
+    <h2>8. 署名</h2>
     <div class="hint" style="margin-bottom:6px">枠内に指またはマウスでフルネームを書いてください。秘密保持確約書と、電子での締結に同意した場合は雇用契約書の署名になります。</div>
     <canvas id="sigPad"></canvas>
     <div style="text-align:right;margin-top:6px"><button type="button" class="btn-sub" id="clearSig">書き直す</button></div>
@@ -476,6 +505,44 @@
   $('ctOpen').onclick = () => NPContractUI.open(contractData(), '雇用契約書（確認）');
   refreshContract();
 
+  /* ---------- 本人確認書類：写真を縮小して保持 ---------- */
+  const PHOTOS = { face: '', front: '', back: '' };
+  function shrinkImage(file, maxSide, quality) {
+    return new Promise((ok, ng) => {
+      const url = URL.createObjectURL(file), img = new Image();
+      img.onload = () => {
+        const s = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
+        const c = document.createElement('canvas');
+        c.width = Math.round(img.naturalWidth * s); c.height = Math.round(img.naturalHeight * s);
+        const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url);
+        ok(c.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); ng(new Error('画像を読み込めませんでした。別の写真でお試しください。')); };
+      img.src = url;
+    });
+  }
+  [['face', 'idFaceFile', 'ph-face'], ['front', 'idFrontFile', 'ph-front'], ['back', 'idBackFile', 'ph-back']].forEach(([k, inp, box]) => {
+    $(inp).addEventListener('change', async e => {
+      const f = e.target.files && e.target.files[0], prev = $(box).querySelector('.ph-prev');
+      if (!f) return;
+      prev.innerHTML = '<div class="ph-meta">読み込み中…</div>';
+      try {
+        PHOTOS[k] = await shrinkImage(f, k === 'face' ? 1000 : 1600, 0.82);
+        prev.innerHTML = '<img src="' + PHOTOS[k] + '" alt=""><div class="ph-meta">✓ 添付しました（撮り直す場合は、もう一度ボタンを押してください）</div>';
+        $(box).querySelector('.ph-btn').textContent = '📷 撮り直す・選び直す';
+      } catch (err) { PHOTOS[k] = ''; prev.innerHTML = '<div class="ph-meta err">' + err.message + '</div>'; }
+    });
+  });
+  const ID_NOTES = {
+    '運転免許証': '表面と裏面（住所変更などの記載がある場合）を撮影してください。',
+    'マイナンバーカード': '表面（顔写真のある面）を撮影してください。裏面（マイナンバーが記載された面）は、マイナンバーの確認のため撮影してください。',
+    '健康保険証・資格確認書': '撮影前に、記号・番号・保険者番号・QRコードの部分を付箋などで隠してください（法律で求められています）。顔写真がない書類のため、顔写真の撮影は必ず行ってください。',
+  };
+  document.querySelectorAll('input[name="idType"]').forEach(r => r.addEventListener('change', () => {
+    $('idNote').textContent = ID_NOTES[r.value] || ''; $('idNote').classList.toggle('hidden', !ID_NOTES[r.value]);
+  }));
+
   /* ---------- 提出 ---------- */
   const radio = n => (document.querySelector('input[name="' + n + '"]:checked') || {}).value || '';
   $('submitBtn').onclick = async () => {
@@ -493,6 +560,7 @@
       signature: hasInk ? canvas.toDataURL('image/png') : '',
       userAgent: navigator.userAgent,
       contractElectronic: $('contractElectronic').checked, contractDate: TERMS.date,
+      idType: radio('idType'), idFace: PHOTOS.face, idFront: PHOTOS.front, idBack: PHOTOS.back,
     };
     // 画面側の簡易チェック（最終チェックはサーバー側）
     const a = age(d.birth);
@@ -503,10 +571,13 @@
     else if (!d.code.trim()) e = 'メールに届いた認証コードを入力してください。';
     else if (!validMyNumber(d.myNumber)) e = 'マイナンバーをご確認ください。';
     else if (a != null && a < 18 && !d.guardianEmail.trim()) { onBirth(); $('minorBox').scrollIntoView({ behavior: 'smooth', block: 'center' }); e = '18歳未満の方は、保護者のメールアドレスを入力してください。'; }
-    else if (!d.emgName.trim() || !d.emgRel || !d.emgTel.trim()) e = '3. 緊急連絡先に未入力の項目があります。';
-    else if (!d.bankName.trim() || !d.bankBranch.trim() || !d.bankNo.trim() || !d.bankHolder.trim()) e = '4. 振込口座に未入力の項目があります。';
-    else if (!d.noCommute && (!d.commuteFrom.trim() || !d.commuteTo.trim() || !(Number(d.commuteOneway) > 0))) e = '5. 交通費を入力してください（不要な場合はチェック）。';
-    else if (!d.signature) e = '6. 署名欄に署名してください。';
+    else if (!d.idFace) e = '3. 顔写真を撮影（または選択）してください。';
+    else if (!d.idType) e = '3. 身分証の種類を選んでください。';
+    else if (!d.idFront) e = '3. 身分証（表面）の写真を撮影（または選択）してください。';
+    else if (!d.emgName.trim() || !d.emgRel || !d.emgTel.trim()) e = '4. 緊急連絡先に未入力の項目があります。';
+    else if (!d.bankName.trim() || !d.bankBranch.trim() || !d.bankNo.trim() || !d.bankHolder.trim()) e = '5. 振込口座に未入力の項目があります。';
+    else if (!d.noCommute && (!d.commuteFrom.trim() || !d.commuteTo.trim() || !(Number(d.commuteOneway) > 0))) e = '6. 交通費を入力してください（不要な場合はチェック）。';
+    else if (!d.signature) e = '8. 署名欄に署名してください。';
     if (e) { msg.textContent = e; return; }
 
     const btn = $('submitBtn'); btn.disabled = true; btn.textContent = '送信中…'; msg.textContent = ''; $('overlay').classList.add('show');
