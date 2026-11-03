@@ -180,6 +180,8 @@
       <label><input type="radio" name="idType" value="運転免許証">運転免許証</label>
       <label><input type="radio" name="idType" value="マイナンバーカード">マイナンバーカード</label>
       <label><input type="radio" name="idType" value="健康保険証・資格確認書">健康保険証・資格確認書</label>
+      <label><input type="radio" name="idType" value="学生証">学生証</label>
+      <label><input type="radio" name="idType" value="住民票">住民票の写し</label>
     </div>
     <div class="notice hidden" id="idNote"></div>
 
@@ -538,6 +540,8 @@
     '運転免許証': '表面と裏面（住所変更などの記載がある場合）を撮影してください。',
     'マイナンバーカード': '表面（顔写真のある面）を撮影してください。裏面（マイナンバーが記載された面）は、マイナンバーの確認のため撮影してください。',
     '健康保険証・資格確認書': '撮影前に、記号・番号・保険者番号・QRコードの部分を付箋などで隠してください（法律で求められています）。顔写真がない書類のため、顔写真の撮影は必ず行ってください。',
+    '学生証': '顔写真・氏名・生年月日・学校名が写るように表面を撮影してください。裏面に住所や有効期限の記載がある場合は、裏面も撮影してください。',
+    '住民票': '発行から3か月以内のものを、「表面」の欄に書類全体（氏名・生年月日・住所が読めるように）撮影してください。マイナンバー（個人番号）が記載されている場合も、隠さずにそのまま撮影してください。裏面は不要です。顔写真がない書類のため、顔写真の撮影は必ず行ってください。',
   };
   document.querySelectorAll('input[name="idType"]').forEach(r => r.addEventListener('change', () => {
     $('idNote').textContent = ID_NOTES[r.value] || ''; $('idNote').classList.toggle('hidden', !ID_NOTES[r.value]);
