@@ -96,7 +96,7 @@
     <div class="card">
       <h2>4. 退職届の確認</h2>
       <div class="doc-prev"><canvas id="doc"></canvas></div>
-      <div class="hint">この内容で提出されます。提出後、画像として保存できます。</div>
+      <div class="hint">この内容で提出されます。</div>
     </div>
 
     <div class="msg err" id="submitMsg"></div>
@@ -109,10 +109,8 @@
     <h1>退職届を提出しました</h1>
     <div>受付番号</div>
     <div class="no" id="receiptNo"></div>
-    <p>退職届を受け付けました。登録のメールアドレスに控えをお送りしました。</p>
-    <button type="button" class="btn-sub" id="saveBtn">📄 退職届を画像で保存</button>
+    <p>退職届を受け付けました。この画面は閉じてかまいません。</p>
   </div>
-  <div class="doc-prev"><img id="doneImg" alt="退職届"></div>
 </div>
 </div>
 
@@ -300,7 +298,6 @@
     const again = r => { if (tries < 6) setTimeout(() => recover(id, onOk, onNg, tries + 1), 3000); else onNg(r); };
     google.script.run.withSuccessHandler(r => { if (r && r.ok) onOk(r); else again(r); }).withFailureHandler(() => again(null)).getResult(id);
   }
-  let SAVED = '';
   $('submitBtn').onclick = () => {
     const msg = $('submitMsg'), btn = $('submitBtn');
     const reason = (document.querySelector('input[name="reason"]:checked') || {}).value || '';
@@ -318,23 +315,17 @@
     };
     btn.disabled = true; btn.textContent = '送信中…'; msg.textContent = ''; $('overlay').classList.add('show');
     const showDone = r => {
-      drawDoc({ receiptNo: r.receiptNo }); SAVED = DOC.toDataURL('image/jpeg', 0.9);
       $('overlay').classList.remove('show');
       $('formArea').classList.add('hidden'); $('doneArea').classList.remove('hidden');
-      $('receiptNo').textContent = r.receiptNo || ''; $('doneImg').src = SAVED; window.scrollTo(0, 0);
+      $('receiptNo').textContent = r.receiptNo || ''; window.scrollTo(0, 0);
     };
     const showFail = t => { $('overlay').classList.remove('show'); msg.textContent = t; btn.disabled = false; btn.textContent = 'この内容で退職届を提出する'; };
-    const later = () => recover(REQ_ID, showDone, () => showFail('送信結果を確認できませんでした。控えのメールが届いていれば提出は完了しています。届いていない場合は、もう一度「提出する」を押してください。'));
+    const later = () => recover(REQ_ID, showDone, () => showFail('送信結果を確認できませんでした。通信状態をご確認のうえ、もう一度「提出する」を押してください（すでに提出済みの場合は、その旨が表示されます）。'));
     google.script.run.withSuccessHandler(r => {
       if (r && r.ok) return showDone(r);
       if (r && r.pending) return later();
       showFail((r && r.message) || 'エラーが発生しました。');
     }).withFailureHandler(later).submitResign(d);
-  };
-  $('saveBtn').onclick = () => {
-    const a = document.createElement('a');
-    a.href = SAVED; a.download = '退職届_' + ($('receiptNo').textContent || '') + '.jpg';
-    document.body.appendChild(a); a.click(); a.remove();
   };
 </script>
 <div class="overlay" id="overlay"><div class="spinner"></div><div>送信しています。<br>画面を閉じずに、しばらくお待ちください。</div></div>
