@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>退職届の提出</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root { --main:#1f4e79; --line:#d0d7de; --bg:#f6f8fa; --err:#c62828; --ok:#2e7d32; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:"Hiragino Sans","Noto Sans JP","Yu Gothic",sans-serif; background:var(--bg); color:#222; line-height:1.7; }
+  .wrap { max-width:640px; margin:0 auto; padding:16px 16px 48px; }
+  h1 { font-size:20px; color:var(--main); margin:8px 0 4px; }
+  .lead { font-size:13px; color:#555; margin:0 0 16px; }
+  .card { background:#fff; border:1px solid var(--line); border-radius:10px; padding:16px; margin-bottom:16px; }
+  .card h2 { font-size:16px; margin:0 0 8px; color:var(--main); }
+  label.f { display:block; font-size:14px; font-weight:600; margin:12px 0 4px; }
+  .req::after { content:"必須"; font-size:11px; color:#fff; background:var(--err); border-radius:3px; padding:0 5px; margin-left:6px; font-weight:normal; }
+  .opt::after { content:"任意"; font-size:11px; color:#fff; background:#888; border-radius:3px; padding:0 5px; margin-left:6px; font-weight:normal; }
+  select, textarea { width:100%; padding:10px; font-size:16px; border:1px solid var(--line); border-radius:6px; background:#fff; font-family:inherit; }
+  textarea { min-height:80px; resize:vertical; }
+  .row { display:flex; gap:8px; align-items:flex-start; }
+  .row > .grow { flex:1; min-width:0; }
+  button { font-size:15px; padding:10px 14px; border:none; border-radius:6px; cursor:pointer; }
+  .btn-main { background:var(--main); color:#fff; width:100%; font-size:17px; padding:14px; }
+  .btn-sub { background:#e7edf3; color:var(--main); white-space:nowrap; }
+  button:disabled { opacity:.5; cursor:not-allowed; }
+  .hint { font-size:12px; color:#666; margin-top:4px; }
+  .msg { font-size:13px; margin-top:4px; min-height:1em; }
+  .msg.err { color:var(--err); }
+  .kv { display:grid; grid-template-columns:auto 1fr; gap:4px 12px; font-size:15px; }
+  .kv b { color:#555; font-weight:600; }
+  .kv .big { font-size:18px; font-weight:700; color:var(--main); }
+  .radios { display:flex; flex-direction:column; gap:6px; }
+  .radios label { display:flex; gap:8px; align-items:center; font-size:15px; }
+  .radios input { width:20px; height:20px; flex:0 0 auto; }
+  #sigPad { width:100%; height:170px; border:2px dashed var(--line); border-radius:6px; touch-action:none; background:#fff; display:block; }
+  .sig-tools { display:flex; justify-content:space-between; align-items:center; margin-top:6px; }
+  .doc-prev { border:1px solid var(--line); border-radius:6px; overflow:hidden; background:#fff; }
+  .doc-prev canvas, .doc-prev img { width:100%; height:auto; display:block; }
+  .done { text-align:center; padding:24px 16px; }
+  .done .no { font-size:20px; font-weight:700; color:var(--main); margin:12px 0; }
+  .hidden { display:none; }
+  .overlay { position:fixed; inset:0; background:rgba(255,255,255,.85); display:none; align-items:center; justify-content:center; flex-direction:column; z-index:999; font-size:15px; color:#1f4e79; text-align:center; padding:24px; }
+  .overlay.show { display:flex; }
+  .spinner { width:42px; height:42px; border:4px solid #d0d7de; border-top-color:#1f4e79; border-radius:50%; animation:spin 1s linear infinite; margin-bottom:14px; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .bd select { padding:10px 6px; }
+  .bad { background:#fff; border:1px solid var(--line); border-radius:10px; padding:24px 16px; text-align:center; color:#444; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div id="formArea">
+  <h1>退職届の提出</h1>
+  <p class="lead"><span data-c="COMPANY_NAME"></span>への退職届の提出ページです。担当者から送られたリンクから開いてください。</p>
+
+  <div id="badLink" class="bad hidden">このページは、担当者から送られた退職届のリンクから開いてください。<br>リンクが分からない場合は、担当者にお問い合わせください。</div>
+
+  <!-- 1 本人確認 -->
+  <div class="card hidden" id="idCard">
+    <h2>1. 本人確認</h2>
+    <label class="f req">生年月日</label>
+    <div class="row bd"><select id="bY" class="grow"><option value="">年</option></select><select id="bM" class="grow"><option value="">月</option></select><select id="bD" class="grow"><option value="">日</option></select></div>
+    <div class="hint">名簿に登録されている生年月日で確認します。</div>
+    <div class="msg err" id="loadMsg"></div>
+    <button type="button" class="btn-main" id="loadBtn" style="margin-top:8px">次へ</button>
+  </div>
+
+  <div id="mainArea" class="hidden">
+    <div class="card">
+      <h2>2. 退職届の内容</h2>
+      <div class="kv">
+        <b>氏名</b><span id="vName"></span>
+        <b>退職日</b><span class="big" id="vDate"></span>
+        <b>届出日</b><span id="vToday"></span>
+      </div>
+      <div class="hint">退職日は担当者と相談して決めた日付です。違う場合は、提出せずに担当者へご連絡ください。</div>
+
+      <label class="f req">退職理由</label>
+      <div class="radios" id="reasons"></div>
+      <label class="f opt" id="noteLabel">理由の補足</label>
+      <textarea id="note" maxlength="500" placeholder="例：大学の授業が増えるため"></textarea>
+      <div class="hint">退職届の文面は「一身上の都合により」となります。退職理由は社内の記録にのみ使います。</div>
+    </div>
+
+    <div class="card">
+      <h2>3. 署名</h2>
+      <div class="hint" style="margin-bottom:6px">枠の中に、指（またはマウス）で氏名を書いてください。</div>
+      <canvas id="sigPad"></canvas>
+      <div class="sig-tools"><span class="hint">署名は退職届の氏名の横に入ります。</span><button type="button" class="btn-sub" id="clearSig">書き直す</button></div>
+    </div>
+
+    <div class="card">
+      <h2>4. 退職届の確認</h2>
+      <div class="doc-prev"><canvas id="doc"></canvas></div>
+      <div class="hint">この内容で提出されます。提出後、画像として保存できます。</div>
+    </div>
+
+    <div class="msg err" id="submitMsg"></div>
+    <button type="button" class="btn-main" id="submitBtn">この内容で退職届を提出する</button>
+  </div>
+</div>
+
+<div id="doneArea" class="hidden">
+  <div class="card done">
+    <h1>退職届を提出しました</h1>
+    <div>受付番号</div>
+    <div class="no" id="receiptNo"></div>
+    <p>退職届を受け付けました。登録のメールアドレスに控えをお送りしました。</p>
+    <button type="button" class="btn-sub" id="saveBtn">📄 退職届を画像で保存</button>
+  </div>
+  <div class="doc-prev"><img id="doneImg" alt="退職届"></div>
+</div>
+</div>
+
+<script src="config.js"></script>
+<script>
+  /* ===== GAS（裏側）との通信 ===== */
+  (function () {
+    const C = window.FORM_CONFIG || {};
+    const params = new URLSearchParams(location.search);
+    function api(fn, args) {
+      return fetch(C.API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn: fn, args: args, k: params.get('k') || '' }) })
+        .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
+    }
+    window.google = { script: {} };
+    Object.defineProperty(window.google.script, 'run', { get: function () {
+      const st = {};
+      const p = new Proxy({}, { get: function (_, k) {
+        if (k === 'withSuccessHandler') return f => { st.s = f; return p; };
+        if (k === 'withFailureHandler') return f => { st.f = f; return p; };
+        return (...args) => api(k, args).then(r => { try { st.s && st.s(r); } catch (e) { console.error(e); } }, e => { console.error(e); st.f && st.f(e); });
+      } });
+      return p;
+    } });
+    document.addEventListener('DOMContentLoaded', () => { document.querySelectorAll('[data-c]').forEach(el => { el.textContent = C[el.getAttribute('data-c')] || ''; }); });
+  })();
+</script>
+<script>
+  const $ = id => document.getElementById(id);
+  const P = new URLSearchParams(location.search);
+  const LINK = { r: (P.get('r') || '').replace(/\D/g, ''), t: (P.get('t') || '').replace(/[^\w-]/g, '') };
+  if (!LINK.r || LINK.t.length < 16) $('badLink').classList.remove('hidden'); else $('idCard').classList.remove('hidden');
+
+  /* ---------- 和暦 ---------- */
+  function wareki(s) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || ''); if (!m) return '';
+    const y = +m[1], key = y * 10000 + (+m[2]) * 100 + (+m[3]);
+    const e = key >= 20190501 ? ['令和', y - 2018] : ['平成', y - 1988];
+    return e[0] + (e[1] === 1 ? '元' : e[1]) + '年' + (+m[2]) + '月' + (+m[3]) + '日';
+  }
+  function eraY(y) { return y >= 2019 ? '令和' + (y - 2018) : y >= 1989 ? '平成' + (y - 1988) : '昭和' + (y - 1925); }
+
+  /* ---------- 生年月日 ---------- */
+  (function initBirth() {
+    const y = $('bY'), m = $('bM'), d = $('bD'), now = new Date().getFullYear();
+    for (let i = now - 15; i >= now - 80; i--) y.add(new Option(i + '年（' + eraY(i) + '）', i));
+    for (let i = 1; i <= 12; i++) m.add(new Option(i + '月', i));
+    const fill = () => { const cur = Number(d.value), n = y.value && m.value ? new Date(y.value, m.value, 0).getDate() : 31; d.length = 1; for (let i = 1; i <= n; i++) d.add(new Option(i + '日', i)); if (cur && cur <= n) d.value = cur; };
+    fill(); ['change', 'input'].forEach(ev => { y.addEventListener(ev, fill); m.addEventListener(ev, fill); });
+  })();
+  const getBirth = () => { const y = $('bY').value, m = $('bM').value, d = $('bD').value; return y && m && d ? y + '-' + String(m).padStart(2, '0') + '-' + String(d).padStart(2, '0') : ''; };
+
+  /* ---------- 本人確認 ---------- */
+  let INFO = null, BIRTH = '';
+  $('loadBtn').onclick = () => {
+    const msg = $('loadMsg'), btn = $('loadBtn'), birth = getBirth();
+    if (!birth) { msg.textContent = '生年月日を選んでください。'; return; }
+    btn.disabled = true; btn.textContent = '確認しています…'; msg.textContent = '';
+    google.script.run.withSuccessHandler(r => {
+      btn.disabled = false; btn.textContent = '次へ';
+      if (!r || !r.ok) { msg.textContent = (r && r.message) || 'エラーが発生しました。'; return; }
+      INFO = r; BIRTH = birth;
+      $('vName').textContent = r.name; $('vDate').textContent = wareki(r.date); $('vToday').textContent = wareki(r.today);
+      $('reasons').innerHTML = r.reasons.map(x => '<label><input type="radio" name="reason" value="' + x + '">' + x + '</label>').join('');
+      $('idCard').classList.add('hidden'); $('mainArea').classList.remove('hidden');
+      window.scrollTo(0, 0);
+      setupPad(true); drawDoc();
+    }).withFailureHandler(() => { btn.disabled = false; btn.textContent = '次へ'; msg.textContent = '通信エラーが発生しました。もう一度お試しください。'; })
+      .loadResign({ r: LINK.r, t: LINK.t, birth: birth });
+  };
+  document.addEventListener('change', e => {
+    if (e.target && e.target.name === 'reason') $('noteLabel').className = 'f ' + (e.target.value === 'その他' ? 'req' : 'opt');
+    if (e.target && e.target.tagName === 'SELECT') setTimeout(() => e.target.blur(), 0);
+  });
+
+  /* ---------- 署名パッド ---------- */
+  const pad = $('sigPad'), pctx = pad.getContext('2d');
+  let drawing = false, hasInk = false, last = null;
+  function setupPad(force) {
+    const rect = pad.getBoundingClientRect();
+    if (!rect.width || !rect.height) return false;
+    const r = window.devicePixelRatio || 1, W = Math.round(rect.width * r), H = Math.round(rect.height * r);
+    if (!force && pad.width === W && pad.height === H) return true;
+    pad.width = W; pad.height = H; pctx.setTransform(r, 0, 0, r, 0, 0);
+    pctx.clearRect(0, 0, rect.width, rect.height);
+    pctx.lineWidth = 2.5; pctx.lineCap = 'round'; pctx.lineJoin = 'round'; pctx.strokeStyle = '#111';
+    hasInk = false; return true;
+  }
+  if (window.ResizeObserver) new ResizeObserver(() => { if (!hasInk) setupPad(true); }).observe(pad);
+  const pos = e => { const b = pad.getBoundingClientRect(), t = e.touches ? e.touches[0] : e; return { x: t.clientX - b.left, y: t.clientY - b.top }; };
+  function padStart(e) { e.preventDefault(); setupPad(false); drawing = true; last = pos(e); pctx.beginPath(); pctx.arc(last.x, last.y, 1.2, 0, Math.PI * 2); pctx.fillStyle = '#111'; pctx.fill(); }
+  function padMove(e) { if (!drawing) return; e.preventDefault(); const p = pos(e); pctx.beginPath(); pctx.moveTo(last.x, last.y); pctx.lineTo(p.x, p.y); pctx.stroke(); last = p; hasInk = true; }
+  const padEnd = () => { if (drawing) { drawing = false; drawDoc(); } };
+  if (window.PointerEvent) {
+    pad.addEventListener('pointerdown', e => { try { pad.setPointerCapture(e.pointerId); } catch (_) {} padStart(e); });
+    pad.addEventListener('pointermove', padMove);
+    ['pointerup', 'pointercancel'].forEach(t => pad.addEventListener(t, padEnd));
+  } else {
+    pad.addEventListener('touchstart', padStart, { passive: false });
+    pad.addEventListener('touchmove', padMove, { passive: false });
+    pad.addEventListener('touchend', padEnd);
+  }
+  $('clearSig').onclick = () => { setupPad(true); drawDoc(); };
+
+  /** 署名の描かれた部分だけを切り出す（余白を除く） */
+  function trimmedSig() {
+    if (!hasInk) return null;
+    const w = pad.width, h = pad.height, data = pctx.getImageData(0, 0, w, h).data;
+    let x0 = w, y0 = h, x1 = -1, y1 = -1;
+    for (let y = 0; y < h; y += 2) for (let x = 0; x < w; x += 2) {
+      if (data[(y * w + x) * 4 + 3] > 20) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    }
+    if (x1 < 0) return null;
+    const m = 6; x0 = Math.max(0, x0 - m); y0 = Math.max(0, y0 - m); x1 = Math.min(w - 1, x1 + m); y1 = Math.min(h - 1, y1 + m);
+    const c = document.createElement('canvas'); c.width = x1 - x0 + 1; c.height = y1 - y0 + 1;
+    c.getContext('2d').drawImage(pad, x0, y0, c.width, c.height, 0, 0, c.width, c.height);
+    return c;
+  }
+
+  /* ---------- 退職届（A4・150dpi）を描く ---------- */
+  const DOC = $('doc'), W = 1240, H = 1754;
+  DOC.width = W; DOC.height = H;
+  const SERIF = '"Noto Serif JP","Hiragino Mincho ProN","Yu Mincho","YuMincho",serif';
+  let fontReady = false;
+  if (document.fonts && document.fonts.load) {
+    Promise.race([Promise.all([document.fonts.load('400 40px "Noto Serif JP"', '退職届'), document.fonts.load('600 40px "Noto Serif JP"', '退職届')]), new Promise(r => setTimeout(r, 4000))])
+      .then(() => { fontReady = true; drawDoc(); });
+  }
+  function wrapText(g, text, x, y, maxW, lh) {
+    let line = '';
+    for (const ch of text) {
+      if (g.measureText(line + ch).width > maxW && line) { g.fillText(line, x, y); y += lh; line = ch; } else line += ch;
+    }
+    if (line) g.fillText(line, x, y);
+    return y + lh;
+  }
+  function drawDoc(extra) {
+    if (!INFO) return;
+    const g = DOC.getContext('2d'), L = 200, R = 1040;
+    g.fillStyle = '#fff'; g.fillRect(0, 0, W, H);
+    g.fillStyle = '#111'; g.textBaseline = 'alphabetic';
+    // 表題
+    g.font = '600 56px ' + SERIF; g.textAlign = 'center';
+    g.fillText('退　　職　　届', W / 2, 300);
+    // 届出日
+    g.font = '400 38px ' + SERIF; g.textAlign = 'right';
+    g.fillText(wareki(INFO.today), R, 420);
+    // 宛名
+    g.textAlign = 'left';
+    g.fillText(INFO.company, L, 560);
+    g.fillText(INFO.to + '　殿', L, 620);
+    // 氏名＋署名
+    g.textAlign = 'left';
+    g.fillText('氏名', 600, 800);
+    g.fillText(INFO.name, 700, 800);
+    const sig = trimmedSig();
+    if (sig) {
+      const bw = 340, bh = 120, s = Math.min(bw / sig.width, bh / sig.height);
+      const dw = sig.width * s, dh = sig.height * s;
+      g.drawImage(sig, R - dw, 830 + (bh - dh) / 2, dw, dh);
+      g.font = '400 22px ' + SERIF; g.fillStyle = '#888'; g.textAlign = 'right';
+      g.fillText('（署名）', R, 980); g.fillStyle = '#111';
+    } else {
+      g.font = '400 26px ' + SERIF; g.fillStyle = '#c8c8c8'; g.textAlign = 'right';
+      g.fillText('ここに署名が入ります', R, 900); g.fillStyle = '#111';
+    }
+    // 本文
+    g.font = '400 38px ' + SERIF; g.textAlign = 'right';
+    g.fillText('私儀', R, 1080);
+    g.textAlign = 'left';
+    let y = wrapText(g, 'このたび一身上の都合により、', L, 1160, R - L, 66);
+    y = wrapText(g, '　' + wareki(INFO.date) + 'をもって退職いたします。', L, y, R - L, 66);
+    g.textAlign = 'right';
+    g.fillText('以上', R, y + 70);
+    // 電子提出の記録
+    g.font = '400 20px ' + SERIF; g.fillStyle = '#777'; g.textAlign = 'left';
+    const t = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 16).replace('T', ' ').replace(/-/g, '/');
+    g.fillText('電子提出（Web）　署名日時 ' + t + (extra && extra.receiptNo ? '　受付番号 ' + extra.receiptNo : ''), L, H - 110);
+    g.fillStyle = '#111';
+  }
+
+  /* ---------- 提出 ---------- */
+  const REQ_ID = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+  function recover(id, onOk, onNg, tries) {
+    tries = tries || 0;
+    const again = r => { if (tries < 6) setTimeout(() => recover(id, onOk, onNg, tries + 1), 3000); else onNg(r); };
+    google.script.run.withSuccessHandler(r => { if (r && r.ok) onOk(r); else again(r); }).withFailureHandler(() => again(null)).getResult(id);
+  }
+  let SAVED = '';
+  $('submitBtn').onclick = () => {
+    const msg = $('submitMsg'), btn = $('submitBtn');
+    const reason = (document.querySelector('input[name="reason"]:checked') || {}).value || '';
+    const note = $('note').value.trim();
+    if (!reason) { msg.textContent = '退職理由を選んでください。'; return; }
+    if (reason === 'その他' && !note) { msg.textContent = '「その他」を選んだ場合は、理由の補足を記入してください。'; return; }
+    if (!hasInk) { msg.textContent = '署名欄に署名してください。'; return; }
+    if (!confirm('退職日 ' + wareki(INFO.date) + ' で退職届を提出します。よろしいですか？')) return;
+    drawDoc();
+    const sigCanvas = trimmedSig();
+    const d = {
+      r: LINK.r, t: LINK.t, birth: BIRTH, reason: reason, note: note,
+      signature: sigCanvas ? sigCanvas.toDataURL('image/png') : '', image: DOC.toDataURL('image/jpeg', 0.85),
+      userAgent: navigator.userAgent, requestId: REQ_ID,
+    };
+    btn.disabled = true; btn.textContent = '送信中…'; msg.textContent = ''; $('overlay').classList.add('show');
+    const showDone = r => {
+      drawDoc({ receiptNo: r.receiptNo }); SAVED = DOC.toDataURL('image/jpeg', 0.9);
+      $('overlay').classList.remove('show');
+      $('formArea').classList.add('hidden'); $('doneArea').classList.remove('hidden');
+      $('receiptNo').textContent = r.receiptNo || ''; $('doneImg').src = SAVED; window.scrollTo(0, 0);
+    };
+    const showFail = t => { $('overlay').classList.remove('show'); msg.textContent = t; btn.disabled = false; btn.textContent = 'この内容で退職届を提出する'; };
+    const later = () => recover(REQ_ID, showDone, () => showFail('送信結果を確認できませんでした。控えのメールが届いていれば提出は完了しています。届いていない場合は、もう一度「提出する」を押してください。'));
+    google.script.run.withSuccessHandler(r => {
+      if (r && r.ok) return showDone(r);
+      if (r && r.pending) return later();
+      showFail((r && r.message) || 'エラーが発生しました。');
+    }).withFailureHandler(later).submitResign(d);
+  };
+  $('saveBtn').onclick = () => {
+    const a = document.createElement('a');
+    a.href = SAVED; a.download = '退職届_' + ($('receiptNo').textContent || '') + '.jpg';
+    document.body.appendChild(a); a.click(); a.remove();
+  };
+</script>
+<div class="overlay" id="overlay"><div class="spinner"></div><div>送信しています。<br>画面を閉じずに、しばらくお待ちください。</div></div>
+</body>
+</html>
